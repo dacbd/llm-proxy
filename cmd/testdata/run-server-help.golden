@@ -1,0 +1,15 @@
+Run an HTTP server using Go's standard library
+
+Usage:
+  llm-proxy run server [flags]
+
+Flags:
+  -h, --help                   help for server
+      --ollama-url string      Upstream Ollama URL (default "http://localhost:11434")
+      --port int               Port to listen on (default 11435)
+      --wandb-api-key string   W&B API key for Weave tracing (env: WANDB_API_KEY)
+      --wandb-project string   W&B project for Weave tracing, format: entity/project (env: WANDB_PROJECT)
+
+Global Flags:
+      --log-format string   Log format: text, json (default: text if interactive, json otherwise)
+      --log-level string    Log level: debug, info, warn, error (default "info")
