@@ -203,6 +203,7 @@ func (h *Handler) Chat(w http.ResponseWriter, r *http.Request) {
 
 		// Write response to client
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Del("Content-Length") // Remove Content-Length as we're re-encoding
 		if err := json.NewEncoder(w).Encode(chatResp); err != nil {
 			slog.Error("error encoding response", "error", err)
 		}

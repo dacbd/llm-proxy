@@ -5,7 +5,8 @@ import (
 
 	"github.com/dacbd/llm-proxy/internal/config"
 	"github.com/dacbd/llm-proxy/internal/handler"
-	"github.com/dacbd/llm-proxy/internal/handler/ollama"
+	ollamahandler "github.com/dacbd/llm-proxy/internal/handler/ollama"
+	"github.com/dacbd/llm-proxy/internal/handler/openai"
 	"github.com/dacbd/llm-proxy/weave"
 )
 
@@ -28,7 +29,7 @@ func RegisterK8sRoutes(mux *http.ServeMux) error {
 }
 
 func RegisterOllamaRoutes(mux *http.ServeMux, cfg *config.ServerConfig, weaveClient weave.API) error {
-	h := ollama.NewHandler(cfg.OllamaURL, weaveClient)
+	h := ollamahandler.NewHandler(cfg.GetUpstreamURL(), weaveClient)
 	mux.HandleFunc("POST /api/generate", h.Generate)
 	mux.HandleFunc("POST /api/chat", h.Chat)
 	mux.HandleFunc("GET /api/tags", h.List)
@@ -36,9 +37,29 @@ func RegisterOllamaRoutes(mux *http.ServeMux, cfg *config.ServerConfig, weaveCli
 	return nil
 }
 
+func RegisterOpenAIRoutes(mux *http.ServeMux, cfg *config.ServerConfig, weaveClient weave.API) error {
+	h := openai.NewHandler(cfg.GetUpstreamURL(), weaveClient)
+	mux.HandleFunc("POST /v1/chat/completions", h.ChatCompletions)
+	mux.HandleFunc("POST /v1/completions", h.Completions)
+	mux.HandleFunc("POST /v1/embeddings", h.Embeddings)
+	mux.HandleFunc("GET /v1/models", h.ListModels)
+	mux.HandleFunc("POST /v1/images/generations", h.CreateImage)
+	return nil
+}
+
 func RegisterRoutes(mux *http.ServeMux, cfg *config.ServerConfig, weaveClient weave.API) error {
-	return SetupRoutes(mux,
+	routes := []RouteRegister{
 		RegisterK8sRoutes,
 		func(mux *http.ServeMux) error { return RegisterOllamaRoutes(mux, cfg, weaveClient) },
-	)
+	}
+
+	// Register OpenAI-compatible routes when upstream type is "openai"
+	// This coexists with Ollama routes
+	if cfg.GetUpstreamType() == "openai" {
+		routes = append(routes, func(mux *http.ServeMux) error {
+			return RegisterOpenAIRoutes(mux, cfg, weaveClient)
+		})
+	}
+
+	return SetupRoutes(mux, routes...)
 }

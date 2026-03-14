@@ -51,7 +51,7 @@ func NewServer(cfg *config.ServerConfig) *Server {
 }
 
 func (s *Server) Start() error {
-	slog.Info("Starting llm-proxy", "port", s.config.Port, "upstream", s.config.OllamaURL)
+	slog.Info("Starting llm-proxy", "port", s.config.Port, "upstream_url", s.config.GetUpstreamURL(), "upstream_type", s.config.GetUpstreamType())
 
 	go func() {
 		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
